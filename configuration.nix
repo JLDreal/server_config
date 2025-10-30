@@ -19,26 +19,13 @@
           fi
 
           if [ ! -d "$HOME/dotfiles/.git" ]; then
-          	git clone https://gitlab.com/hmajid2301/dotfiles.git "$HOME/dotfiles"
+          	git clone https://github.com/JLDreal/server_config "$HOME/dotfiles"
           fi
 
           TARGET_HOST=$(ls -1 ~/dotfiles/hosts/*/configuration.nix | cut -d'/' -f6 | grep -v iso | gum choose)
 
-          if [ ! -e "$HOME/dotfiles/hosts/$TARGET_HOST/disks.nix" ]; then
-          	echo "ERROR! $(basename "$0") could not find the required $HOME/dotfiles/hosts/$TARGET_HOST/disks.nix"
-          	exit 1
-          fi
-
           gum confirm  --default=false \
           "🔥 🔥 🔥 WARNING!!!! This will ERASE ALL DATA on the disk $TARGET_HOST. Are you sure you want to continue?"
-
-          echo "Partitioning Disks"
-          sudo nix run github:nix-community/disko \
-          --extra-experimental-features "nix-command flakes" \
-          --no-write-lock-file \
-          -- \
-          --mode zap_create_mount \
-          "$HOME/dotfiles/hosts/$TARGET_HOST/disks.nix"
 
           sudo nixos-install --flake "$HOME/dotfiles#$TARGET_HOST"
         ''

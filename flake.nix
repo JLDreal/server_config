@@ -60,6 +60,13 @@ in {
       ];
       specialArgs = {inherit inputs;};
     };
+    system = lib.nixosSystem {
+      modules = [
+
+        ./configuration.nix
+      ];
+      specialArgs = {inherit inputs;};
+    };
   };
 
 };}
