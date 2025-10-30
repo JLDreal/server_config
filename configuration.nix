@@ -22,7 +22,7 @@
           	git clone https://github.com/JLDreal/server_config "$HOME/dotfiles"
           fi
 
-          TARGET_HOST=$(ls -1 ~/dotfiles/hosts/*/configuration.nix | cut -d'/' -f6 | grep -v iso | gum choose)
+          TARGET_HOST=$(ls -1 ~/dotfiles/configuration.nix | cut -d'/' -f6 | grep -v iso | gum choose)
 
           gum confirm  --default=false \
           "🔥 🔥 🔥 WARNING!!!! This will ERASE ALL DATA on the disk $TARGET_HOST. Are you sure you want to continue?"
