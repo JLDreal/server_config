@@ -47,9 +47,7 @@ let
   };
 in {
 
-  environment.systemPackages = with pkgs; [ git
 
-  ];
 
   nixosConfigurations = {
     iso = lib.nixosSystem {
@@ -60,10 +58,9 @@ in {
       ];
       specialArgs = {inherit inputs;};
     };
-    system = lib.nixosSystem {
+    server = lib.nixosSystem {
       modules = [
-
-        ./configuration.nix
+        ./server.nix
       ];
       specialArgs = {inherit inputs;};
     };
