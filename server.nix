@@ -42,7 +42,7 @@
         kernelPackages = pkgs.linuxPackages_latest;
         supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
         # Bootloader will be configured by installer
-        loader.grub.devices = lib.mkDefault [ "/dev/sda" ];
+        loader.systemd-boot.enable = true;
       };
 
       # Filesystems will be configured by installer
