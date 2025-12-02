@@ -78,11 +78,11 @@
           sleep 2
 
           if [[ "$TARGET_DISK" == nvme* ]]; then
-            BIOS_PART="${DISK_PATH}p1"
-            ROOT_PART="${DISK_PATH}p2"
+            BIOS_PART="$DISK_PATH"p1
+            ROOT_PART="$DISK_PATH"p2
           else
-            BIOS_PART="${DISK_PATH}1"
-            ROOT_PART="${DISK_PATH}2"
+            BIOS_PART="$DISK_PATH"1
+            ROOT_PART="$DISK_PATH"2
           fi
 
           log_info "Formatting root partition..."
