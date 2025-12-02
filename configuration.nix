@@ -102,14 +102,7 @@
           # Copy the flake configuration as a reference and append installation-specific bits
           sudo cp "$HOME/dotfiles/server.nix" /mnt/etc/nixos/configuration.nix
 
-          sudo tee -a /mnt/etc/nixos/configuration.nix > /dev/null << 'EOF'
 
-# Installation-specific configuration (BIOS)
-fileSystems."/" = {
-  device = "/dev/disk/by-label/ROOT";
-  fsType = "ext4";
-};
-EOF
 
           # Export the install target so the flake can read it when evaluated
           export INSTALL_DISK="$DISK_PATH"
