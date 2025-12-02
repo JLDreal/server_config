@@ -20,7 +20,6 @@
     };
   };
 
-  # merged networking (hostName + static interface)
   networking = {
     usePredictableInterfaceNames = false;
     interfaces.eth0.ipv4.addresses = [{
@@ -46,34 +45,31 @@
     kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
 
-    # BIOS (legacy) GRUB for non-UEFI systems
-    loader.grub = {
+    # BIOS (legacy) GRUB for non-UEFI systems.
+    # The disk device used for grub installation will be taken from the INSTALL_DISK
+    # environment variable if present, otherwise it falls back to /dev/sda.
+    grub = {
       enable = true;
       version = 2;
-      # Install to the whole disk MBR (GRUB installs core.img into bios_grub partition on GPT)
-      device = "/dev/sda";
-      # We're on BIOS, so no efiSupport
       efiSupport = false;
-      # Do not try to auto-use 'nodev' here — we want GRUB in the MBR for BIOS
+      # read device from env variable set by the installer script:
+      device = lib.mkDefault (let devEnv = builtins.getEnv "INSTALL_DISK"; in if devEnv == "" then "/dev/sda" else devEnv);
     };
   };
 
-  # Filesystems will be configured by installer
-  # These are fallback defaults for non-installer usage
   fileSystems."/" = lib.mkDefault {
     device = "/dev/disk/by-label/ROOT";
     fsType = "ext4";
   };
 
-  # /boot is still used as mountpoint for kernels/bootloader files
   fileSystems."/boot" = lib.mkDefault {
+    # Keep a harmless default for /boot if someone creates it; not used on minimal BIOS installs.
     device = "/dev/disk/by-label/EFI";
     fsType = "vfat";
   };
 
   system.stateVersion = "25.11";
 
-  # gnome power settings do not turn off screen
   systemd = {
     services.sshd.wantedBy = pkgs.lib.mkForce ["multi-user.target"];
     targets = {
@@ -86,7 +82,7 @@
 
   users.users.hans = {
     isNormalUser = true;
-    password = "egon34"; # TODO: replace with hash or use SSH keys
+    password = "egon34"; # TODO: replace with a hash or SSH keys
     description = "hans";
     extraGroups = [ "networkmanager" "wheel" "sudo" ];
     packages = with pkgs; [
@@ -95,7 +91,5 @@
     ];
   };
 
-  # avoid keeping root password in plaintext in your repo; prefer a hash or
-  # lock the account and use sudo keys
-  users.extraUsers.root.password = "egon34";
+  users.extraUsers.root.password = "egon34"; # TODO: remove plaintext
 }
