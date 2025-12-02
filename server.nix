@@ -1,4 +1,4 @@
-{
+{ 
   pkgs,
   lib,
   ...
@@ -19,75 +19,83 @@
         AllowUsers = [ "hans" ];
       };
     };
-    networking = {
-        usePredictableInterfaceNames = false;
-        interfaces.eth0.ipv4.addresses = [{
-          address = "10.1.104.202";
-          prefixLength = 16;
-        }];
-        defaultGateway = "10.1.104.90";
-        nameservers = [ "10.1.104.1" ];
-      };
-      nixpkgs = {
-        hostPlatform = lib.mkDefault "x86_64-linux";
-        config.allowUnfree = true;
-      };
 
-      nix = {
-        settings.experimental-features = ["nix-command" "flakes"];
-        extraOptions = "experimental-features = nix-command flakes";
-      };
+  # merged networking (hostName + static interface)
+  networking = {
+    usePredictableInterfaceNames = false;
+    interfaces.eth0.ipv4.addresses = [{
+      address = "10.1.104.202";
+      prefixLength = 16;
+    }];
+    defaultGateway = "10.1.104.90";
+    nameservers = [ "10.1.104.1" ];
+    hostName = "sklave1";
+  };
 
-      boot = {
-        kernelPackages = pkgs.linuxPackages_latest;
-        supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
-        # Bootloader will be configured by installer
-        loader.grub = {
-          enable = true;
-          devices = [ "/dev/sda" ];
-          efiSupport = false;
-          efiInstallAsRemovable = false;
-        };
-      };
+  nixpkgs = {
+    hostPlatform = lib.mkDefault "x86_64-linux";
+    config.allowUnfree = true;
+  };
 
-      # Filesystems will be configured by installer
-      # These are fallback defaults for non-installer usage
-      fileSystems."/" = lib.mkDefault {
-        device = "/dev/disk/by-label/ROOT";
-        fsType = "ext4";
-      };
+  nix = {
+    settings.experimental-features = ["nix-command" "flakes"];
+    extraOptions = "experimental-features = nix-command flakes";
+  };
 
-      fileSystems."/boot" = lib.mkDefault {
-        device = "/dev/disk/by-label/EFI";
-        fsType = "vfat";
-      };
+  boot = {
+    kernelPackages = pkgs.linuxPackages_latest;
+    supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
 
-      system.stateVersion = "25.11";
-
-      networking = {
-        hostName = "sklave1";
+    # Use systemd-boot (UEFI) to match installer
+    loader = {
+      # enable systemd-boot (preferred for simple UEFI installs)
+      systemd-boot.enable = true;
+      efi = {
+        canTouchEfiVariables = true;
       };
+      # If you ever want GRUB EFI instead, set grub.efiSupport = true and
+      # boot.loader.grub.device = "nodev" and remove grub.devices = ...
+    };
+  };
 
-      # gnome power settings do not turn off screen
-      systemd = {
-        services.sshd.wantedBy = pkgs.lib.mkForce ["multi-user.target"];
-        targets = {
-          sleep.enable = false;
-          suspend.enable = false;
-          hibernate.enable = false;
-          hybrid-sleep.enable = false;
-        };
-      };
+  # Filesystems will be configured by installer
+  # These are fallback defaults for non-installer usage
+  fileSystems."/" = lib.mkDefault {
+    device = "/dev/disk/by-label/ROOT";
+    fsType = "ext4";
+  };
 
-      users.users.hans = {
-        isNormalUser = true;
-        password = "egon34";
-        description = "hans";
-        extraGroups = [ "networkmanager" "wheel" "sudo" "root" ];
-        packages = with pkgs; [
-          git
-          curl
-        ];
-      };
-      users.extraUsers.root.password = "egon34";
+  # with systemd-boot, the ESP is normally mounted at /boot
+  fileSystems."/boot" = lib.mkDefault {
+    device = "/dev/disk/by-label/EFI";
+    fsType = "vfat";
+  };
+
+  system.stateVersion = "25.11";
+
+  # gnome power settings do not turn off screen
+  systemd = {
+    services.sshd.wantedBy = pkgs.lib.mkForce ["multi-user.target"];
+    targets = {
+      sleep.enable = false;
+      suspend.enable = false;
+      hibernate.enable = false;
+      hybrid-sleep.enable = false;
+    };
+  };
+
+  users.users.hans = {
+    isNormalUser = true;
+    password = "egon34";
+    description = "hans";
+    extraGroups = [ "networkmanager" "wheel" "sudo" ];
+    packages = with pkgs; [
+      git
+      curl
+    ];
+  };
+
+  # avoid keeping root password in plaintext in your repo; prefer a hash or
+  # lock the account and use sudo keys
+  users.extraUsers.root.password = "egon34";
 }
