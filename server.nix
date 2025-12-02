@@ -46,13 +46,15 @@
     kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
 
-    # Use systemd-boot (UEFI) to match the installer configuration
-    loader = {
-      systemd-boot.enable = true;
-      # Allow installer / nixos-install to write EFI variables when booted under UEFI
-      efi = {
-        canTouchEfiVariables = true;
-      };
+    # BIOS (legacy) GRUB for non-UEFI systems
+    loader.grub = {
+      enable = true;
+      version = 2;
+      # Install to the whole disk MBR (GRUB installs core.img into bios_grub partition on GPT)
+      device = "/dev/sda";
+      # We're on BIOS, so no efiSupport
+      efiSupport = false;
+      # Do not try to auto-use 'nodev' here — we want GRUB in the MBR for BIOS
     };
   };
 
@@ -63,7 +65,7 @@
     fsType = "ext4";
   };
 
-  # with systemd-boot, the ESP is normally mounted at /boot
+  # /boot is still used as mountpoint for kernels/bootloader files
   fileSystems."/boot" = lib.mkDefault {
     device = "/dev/disk/by-label/EFI";
     fsType = "vfat";
