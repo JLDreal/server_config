@@ -30,7 +30,7 @@
 
           if [ ! -d "$HOME/dotfiles/.git" ]; then
             log_info "Cloning server_config repository..."
-            git clone https://github.com/JLDreal/server_config "$HOME/dotfiles"
+            git clone -b main --single-branch https://github.com/JLDreal/server_config "$HOME/dotfiles"
           fi
 
           TARGET_HOST="server"
