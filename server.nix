@@ -4,21 +4,21 @@
   ...
 }: {
   environment.systemPackages = with pkgs; [
-      git
-      gum
-      curl
-    ];
+    git
+    gum
+    curl
+  ];
 
   services.openssh = {
-      enable = true;
-      ports = [ 22 ];
-      settings = {
-        PasswordAuthentication = true;
-        KbdInteractiveAuthentication = false;
-        PermitRootLogin = "no";
-        AllowUsers = [ "hans" ];
-      };
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      PasswordAuthentication = true;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+      AllowUsers = [ "hans" ];
     };
+  };
 
   # merged networking (hostName + static interface)
   networking = {
@@ -46,15 +46,13 @@
     kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
 
-    # Use systemd-boot (UEFI) to match installer
+    # Use systemd-boot (UEFI) to match the installer configuration
     loader = {
-      # enable systemd-boot (preferred for simple UEFI installs)
       systemd-boot.enable = true;
+      # Allow installer / nixos-install to write EFI variables when booted under UEFI
       efi = {
         canTouchEfiVariables = true;
       };
-      # If you ever want GRUB EFI instead, set grub.efiSupport = true and
-      # boot.loader.grub.device = "nodev" and remove grub.devices = ...
     };
   };
 
@@ -86,7 +84,7 @@
 
   users.users.hans = {
     isNormalUser = true;
-    password = "egon34";
+    password = "egon34"; # TODO: replace with hash or use SSH keys
     description = "hans";
     extraGroups = [ "networkmanager" "wheel" "sudo" ];
     packages = with pkgs; [
