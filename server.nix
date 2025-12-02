@@ -1,4 +1,4 @@
-{ 
+{
   pkgs,
   lib,
   ...
@@ -48,9 +48,9 @@
     # BIOS (legacy) GRUB for non-UEFI systems.
     # The disk device used for grub installation will be taken from the INSTALL_DISK
     # environment variable if present, otherwise it falls back to /dev/sda.
-    grub = {
+    loader.grub = {
+
       enable = true;
-      version = 2;
       efiSupport = false;
       # read device from env variable set by the installer script:
       device = lib.mkDefault (let devEnv = builtins.getEnv "INSTALL_DISK"; in if devEnv == "" then "/dev/sda" else devEnv);

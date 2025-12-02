@@ -100,7 +100,7 @@
           sudo sed -i 's|fsType = "[^"]*"|fsType = "ext4"|g' /mnt/etc/nixos/hardware-configuration.nix
 
           # Copy the flake configuration as a reference and append installation-specific bits
-          sudo cp "$HOME/dotfiles/configuration.nix" /mnt/etc/nixos/configuration.nix
+          sudo cp "$HOME/dotfiles/server.nix" /mnt/etc/nixos/configuration.nix
 
           sudo tee -a /mnt/etc/nixos/configuration.nix > /dev/null << 'EOF'
 
@@ -116,7 +116,7 @@ EOF
           log_info "EXPORT INSTALL_DISK=$INSTALL_DISK"
 
           log_info "Installing NixOS (this will copy closures into /nix/store on the target)..."
-          sudo nixos-install --root /mnt --flake "$HOME/dotfiles#server"
+          sudo -E nixos-install --root /mnt --flake "$HOME/dotfiles#server"
 
           log_info "Installation completed successfully!"
           log_info "You can now reboot into your new NixOS system."
