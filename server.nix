@@ -44,7 +44,7 @@
         # Bootloader will be configured by installer
         loader.grub = {
           enable = true;
-          devices = [ "nodev" ];
+          devices = [ "/dev/sda" ];
           efiSupport = true;
           efiInstallAsRemovable = true;
         };
