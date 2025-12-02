@@ -62,11 +62,11 @@
     fsType = "ext4";
   };
 
-  # fileSystems."/boot" = lib.mkDefault {
-  #   # Keep a harmless default for /boot if someone creates it; not used on minimal BIOS installs.
-  #   device = "/dev/disk/by-label/EFI";
-  #   fsType = "vfat";
-  # };
+  fileSystems."/boot" = lib.mkDefault {
+    # Keep a harmless default for /boot if someone creates it; not used on minimal BIOS installs.
+    device = "/dev/disk/by-label/EFI";
+    fsType = "vfat";
+  };
 
   system.stateVersion = "25.11";
 

@@ -96,8 +96,7 @@
 
           # Use labels for root
           sudo e2label "$ROOT_PART" ROOT
-          sudo sed -i 's|device = "/dev/[^"]*"|device = "/dev/disk/by-label/ROOT"|g' /mnt/etc/nixos/hardware-configuration.nix
-          sudo sed -i 's|fsType = "[^"]*"|fsType = "ext4"|g' /mnt/etc/nixos/hardware-configuration.nix
+
 
           # Copy the flake configuration as a reference and append installation-specific bits
           sudo cp "$HOME/dotfiles/server.nix" /mnt/etc/nixos/configuration.nix
