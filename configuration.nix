@@ -81,107 +81,79 @@
             sudo partprobe "$DISK_PATH"
             sleep 2
 
-            # Create partition table
-            log_info "Creating partition table..."
+            # Create partition table (GPT) and partitions for BIOS GRUB + root
+            log_info "Creating partition table and partitions for BIOS boot..."
             sudo sgdisk --clear "$DISK_PATH"
-            
-            # Create EFI partition (512M)
-            log_info "Creating EFI partition..."
-            sudo sgdisk --new=1:0:+512M --typecode=1:EF00 --change-name=1:EFI "$DISK_PATH"
-            
+
+            # Create bios_grub partition (1-2 MiB) - do NOT format this partition
+            sudo sgdisk --new=1:1MiB:+2MiB --typecode=1:ef02 --change-name=1:bios_grub "$DISK_PATH"
+
             # Create root partition (remaining space)
-            log_info "Creating root partition..."
             sudo sgdisk --new=2:0:0 --typecode=2:8300 --change-name=2:ROOT "$DISK_PATH"
-            
+
             # Inform kernel of partition changes
             sudo partprobe "$DISK_PATH"
             sleep 2
 
             # Determine partition names
             if [[ "$TARGET_DISK" == nvme* ]]; then
-                EFI_PART="''${DISK_PATH}p1"
+                BIOS_PART="''${DISK_PATH}p1"
                 ROOT_PART="''${DISK_PATH}p2"
             else
-                EFI_PART="''${DISK_PATH}1"
+                BIOS_PART="''${DISK_PATH}1"
                 ROOT_PART="''${DISK_PATH}2"
             fi
 
-            # Format partitions
-            log_info "Formatting EFI partition..."
-            sudo mkfs.fat -F32 "$EFI_PART"
-            
+            # IMPORTANT: Do NOT format BIOS_PART. It must remain unformatted for GRUB core.img.
+            # Format root partition
             log_info "Formatting root partition..."
             sudo mkfs.ext4 -F "$ROOT_PART"
 
             # Mount partitions for installation
             log_info "Mounting partitions..."
             sudo mount "$ROOT_PART" /mnt
-            sudo mkdir -p /mnt/boot
-            sudo mount "$EFI_PART" /mnt/boot
+            # Note: No /mnt/boot/vfat mount needed for BIOS installs unless you want a separate /boot.
 
             # Generate hardware configuration
             log_info "Generating hardware configuration..."
             sudo nixos-generate-config --root /mnt
 
-            # Create a temporary configuration that includes our custom settings
+            # Create a temporary configuration that includes only necessary filesystem settings
             log_info "Creating installation configuration..."
             cat > /tmp/install-config.nix << 'EOF'
 { config, pkgs, lib, ... }:
 {
   imports = [ ./hardware-configuration.nix ];
 
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  
+  # Do not enable systemd-boot here — target is BIOS (GRUB) and server flake handles bootloader.
   fileSystems."/" = {
     device = "/dev/disk/by-label/ROOT";
     fsType = "ext4";
   };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/EFI";
-    fsType = "vfat";
-  };
-
-  # Add labels to partitions
-  boot.initrd.luks.devices = {
-    root = {
-      device = "/dev/disk/by-label/ROOT";
-    };
-  };
 }
 EOF
 
-            # Update the generated configuration to use labels
+            # Update the generated configuration to use labels for root partition
             sudo sed -i 's|device = "/dev/[^"]*"|device = "/dev/disk/by-label/ROOT"|g' /mnt/etc/nixos/hardware-configuration.nix
             sudo sed -i 's|fsType = "[^"]*"|fsType = "ext4"|g' /mnt/etc/nixos/hardware-configuration.nix
 
-            # Add labels to partitions
-            sudo fatlabel "$EFI_PART" EFI
+            # Add label to root partition
             sudo e2label "$ROOT_PART" ROOT
 
-            # Copy our custom configuration
+            # Copy our custom configuration (flake) to /mnt for reference if desired
             sudo cp "$HOME/dotfiles/configuration.nix" /mnt/etc/nixos/configuration.nix
 
-            # Merge with installation config
+            # Append installation-specific filesystem labels (no systemd-boot)
             sudo tee -a /mnt/etc/nixos/configuration.nix > /dev/null << 'EOF'
 
-# Installation-specific configuration
-boot.loader.systemd-boot.enable = true;
-boot.loader.efi.canTouchEfiVariables = true;
-
+# Installation-specific configuration (BIOS install)
 fileSystems."/" = {
   device = "/dev/disk/by-label/ROOT";
   fsType = "ext4";
 };
-
-fileSystems."/boot" = {
-  device = "/dev/disk/by-label/EFI";
-  fsType = "vfat";
-};
 EOF
 
-            # Install NixOS
+            # Install NixOS using flake (flake's server.nix should configure GRUB for BIOS)
             log_info "Installing NixOS..."
             sudo nixos-install --root /mnt --flake "$HOME/dotfiles#server"
 
@@ -225,7 +197,7 @@ EOF
       boot = {
         kernelPackages = pkgs.linuxPackages_latest;
         supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
-        # Bootloader will be configured by installer
+        # Bootloader will be configured by installer (flake's server.nix must use BIOS GRUB)
         loader.grub.devices = lib.mkDefault [ "/dev/sda" ];
       };
 
@@ -237,7 +209,7 @@ EOF
       };
 
       fileSystems."/boot" = lib.mkDefault {
-        device = "/dev/disk/by-label/EFI";
+        device = "/dev/disk/by-label/EFI"; # harmless default; unused in BIOS installs
         fsType = "vfat";
       };
 
