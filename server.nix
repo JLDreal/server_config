@@ -45,7 +45,7 @@
         loader.grub = {
           enable = true;
           devices = [ "/dev/sda" ];
-          efiSupport = true;
+          efiSupport = false;
           efiInstallAsRemovable = true;
         };
       };
