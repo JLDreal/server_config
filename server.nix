@@ -46,7 +46,7 @@
           enable = true;
           devices = [ "/dev/sda" ];
           efiSupport = false;
-          efiInstallAsRemovable = true;
+          efiInstallAsRemovable = false;
         };
       };
 
