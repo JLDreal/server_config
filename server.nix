@@ -44,7 +44,7 @@
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "ext4"];
-
+    initrd.kernelModules = [ "hpsa" "scsi_mod" "sd_mod" ];
     # BIOS (legacy) GRUB for non-UEFI systems.
     # The disk device used for grub installation will be taken from the INSTALL_DISK
     # environment variable if present, otherwise it falls back to /dev/sda.
