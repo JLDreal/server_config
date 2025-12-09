@@ -20,16 +20,7 @@
     };
   };
 
-  networking = {
-    usePredictableInterfaceNames = false;
-    interfaces.eth0.ipv4.addresses = [{
-      address = "10.1.104.202";
-      prefixLength = 16;
-    }];
-    defaultGateway = "10.1.104.90";
-    nameservers = [ "10.1.104.1" ];
-    hostName = "sklave1";
-  };
+  networking.networkmanager.enable = true;
 
   nixpkgs = {
     hostPlatform = lib.mkDefault "x86_64-linux";
